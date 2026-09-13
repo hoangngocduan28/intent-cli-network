@@ -1,0 +1,9 @@
+! Task: enable_ssh | Target: {{ target_device }}
+ip domain-name {{ domain_name }}
+username {{ username }} privilege 15 secret {{ user_secret }}
+crypto key generate rsa modulus {{ rsa_key_size }}
+ip ssh version {{ ssh_version }}
+line vty 0 4
+ transport input ssh
+ login local
+exit

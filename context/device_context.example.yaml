@@ -1,0 +1,24 @@
+# Device Context — nguồn sự thật duy nhất về thiết bị mà Agent được phép dùng.
+# Agent KHÔNG được tự bịa interface/VLAN/IP không có trong file này.
+# Intent Validator sẽ đối chiếu target_device và các resource được tham chiếu
+# với file này để phát hiện INVALID_CONTEXT.
+
+devices:
+  SW1:
+    hostname: SW1
+    vendor: Cisco
+    os: IOS
+    role: access-switch
+    interfaces:
+      GigabitEthernet0/1: { status: up }
+      GigabitEthernet0/2: { status: down }
+    existing_vlans: [10, 30]
+
+  R1:
+    hostname: R1
+    vendor: Cisco
+    os: IOS-XE
+    role: router
+    interfaces:
+      GigabitEthernet0/0: { status: up }
+    existing_vlans: []

@@ -1,0 +1,4 @@
+! Task: standard_acl | Target: {{ target_device }}
+{% for rule in rules -%}
+access-list {{ acl_number }} {{ rule.action }} {{ rule.source }}
+{% endfor -%}

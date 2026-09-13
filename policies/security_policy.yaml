@@ -1,0 +1,20 @@
+# Security Policy — Guardrail tất định, độc lập hoàn toàn với LLM.
+# File này được version control bằng Git; mọi thay đổi baseline phải qua
+# review, không được sửa ngầm bởi Agent trong lúc chạy.
+
+ssh:
+  minimum_version: 2
+  minimum_rsa_size: 2048
+
+management:
+  telnet_allowed: false
+
+authentication:
+  plaintext_password_allowed: false
+
+vlan:
+  reserved_range: [1002, 1005]   # VLAN nội bộ Cisco, không cho phép user tạo
+
+acl:
+  max_rules_per_acl: 20
+  forbidden_source: ["0.0.0.0 255.255.255.255"]  # tương đương "permit any" trá hình, chặn để buộc tường minh
