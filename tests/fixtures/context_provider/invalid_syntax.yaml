@@ -1,0 +1,4 @@
+devices:
+  SW1:
+    hostname: SW1
+  vendor: [unclosed

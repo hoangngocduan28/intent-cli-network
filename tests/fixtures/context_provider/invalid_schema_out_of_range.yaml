@@ -1,0 +1,10 @@
+# privilege_level=99 vượt range 0-15 -> phải raise InventoryLoadError.
+devices:
+  SW1:
+    hostname: SW1
+    vendor: Cisco
+    os: IOS
+    role: access-switch
+    local_users:
+      - username: netadmin
+        privilege_level: 99

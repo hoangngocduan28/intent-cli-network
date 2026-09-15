@@ -1,0 +1,6 @@
+# Thiếu field bắt buộc `role` -> phải raise InventoryLoadError, không tự điền default.
+devices:
+  SW1:
+    hostname: SW1
+    vendor: Cisco
+    os: IOS

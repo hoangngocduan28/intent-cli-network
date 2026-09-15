@@ -1,0 +1,52 @@
+# Inventory — nguồn sự thật duy nhất về topology mà Agent được phép biết.
+# Nạp qua src/context_provider/loader.py (fail-closed nếu sai schema).
+# Đây là bản mẫu khớp topology EVE-NG lab hiện tại (2 node: SW1, R1) —
+# CẦN cập nhật lại khi topology lab thay đổi.
+#
+# mgmt_ip ở đây CHỈ dùng cho việc test thủ công qua Netmiko/NAPALM trên
+# EVE-NG (xem CLAUDE.md mục 1) — src/context_provider/builder.py loại bỏ
+# field này trước khi đưa context vào LLM.
+
+devices:
+  SW1:
+    hostname: SW1
+    vendor: Cisco
+    os: IOS
+    role: access-switch
+    mgmt_ip: 192.0.2.11
+    interfaces:
+      GigabitEthernet0/1:
+        status: up
+        description: uplink to R1
+      GigabitEthernet0/2:
+        status: down
+    existing_vlans: [10, 30]
+    routes: []
+    existing_acls:
+      - number: 1
+        applied_interface: GigabitEthernet0/2
+        direction: in
+    local_users:
+      - username: netadmin
+        privilege_level: 15
+
+  R1:
+    hostname: R1
+    vendor: Cisco
+    os: IOS-XE
+    role: router
+    mgmt_ip: 192.0.2.1
+    interfaces:
+      GigabitEthernet0/0:
+        status: up
+        description: uplink to SW1
+    existing_vlans: []
+    routes:
+      - destination: 0.0.0.0
+        mask: 0.0.0.0
+        next_hop: 192.0.2.254
+        interface: GigabitEthernet0/0
+    existing_acls: []
+    local_users:
+      - username: netadmin
+        privilege_level: 15
