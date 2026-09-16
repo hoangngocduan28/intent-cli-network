@@ -3,8 +3,11 @@ Guardrail — Policy Engine
 =========================
 
 Vị trí trong pipeline: SAU khi Structured Intent đã pass Pydantic schema
-(src/intent_parser/schema.py), TRƯỚC khi đưa vào Config Generator
-(src/config_generator/generator.py).
+(src/schemas/intent_schema.py), TRƯỚC khi đưa vào Config Generator
+(src/config_generator/generator.py). Module này cùng với
+context_validator.py và classifier.py nằm trong src/guardrail/pre_render/
+— nhóm guardrail chạy TRƯỚC khi CLI được render (khác với
+src/guardrail/post_render/, hiện chưa implement).
 
 Tại sao cần lớp này nếu schema đã validate pattern rồi?
 --> Defense in depth. Hai lý do cụ thể:
@@ -17,7 +20,7 @@ Tại sao cần lớp này nếu schema đã validate pattern rồi?
      khi chạm vào template.
 
 Kiểm tra INVALID_CONTEXT (device/resource có tồn tại không) đã tách riêng
-sang `src/guardrail/context_validator.py` vì nó phụ thuộc Inventory
+sang `src/guardrail/pre_render/context_validator.py` vì nó phụ thuộc Inventory
 (src/context_provider/) thay vì Security Policy — hai nguồn dữ liệu khác
 bản chất, không nên gộp chung một file.
 

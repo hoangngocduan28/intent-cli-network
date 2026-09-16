@@ -10,7 +10,7 @@ Structured Intent — tức là giả lập output của Intent Parser để có
     Structured Intent (giả lập)
             |
             v
-      classify()              -> src/classifier.py
+      classify()              -> src/guardrail/pre_render/classifier.py
             |
     VALID_CONFIG?
        |         \\
@@ -20,15 +20,15 @@ Structured Intent — tức là giả lập output của Intent Parser để có
      render()                 -> src/config_generator/generator.py
             |
             v
-   validate_properties()      -> src/guardrail/intent_validator.py  (nếu có expected_properties)
-            |
-      pass / fail
-       |         \\
-      yes         no --> regenerate() (đếm số lần thử, KHÔNG tự sửa params —
-       |                  vì params sai là do Intent Parser, nên trả lỗi
-       |                  ngược lên tầng gọi Parser lại, không phải tự vá)
-       v
    PipelineResult(status=SUCCESS, cli=...)
+
+Ghi chú: bản trước có thêm một bước validate_properties() tùy chọn sau
+render(), chỉ chạy khi caller truyền expected_properties — nhưng không có
+production caller nào từng truyền tham số đó, chỉ tests/ và
+examples/run_demo.py dùng để tự assert kết quả mong đợi. Đó thực chất là
+test assertion, không phải guardrail thật, nên đã bị coi là vi phạm trust
+boundary (test code nằm trên đường đi production) và được dời hẳn về
+tests/test_intent_validator.py, không còn được run_pipeline() gọi tới.
 """
 
 from __future__ import annotations
@@ -37,11 +37,10 @@ from typing import Optional
 import yaml
 from pathlib import Path
 
-from src.intent_parser.schema import IntentState
+from src.schemas.intent_schema import IntentState
 from src.context_provider.schema import Inventory
-from src.classifier import classify
+from src.guardrail.pre_render.classifier import classify
 from src.config_generator.generator import render
-from src.guardrail.intent_validator import validate_properties
 
 MAX_REGENERATION_ATTEMPTS = 3
 
@@ -49,6 +48,8 @@ MAX_REGENERATION_ATTEMPTS = 3
 @dataclass
 class PipelineResult:
     status: str  # "SUCCESS" | "REJECTED" | "NEEDS_CLARIFICATION" | "FAILED_TO_GENERATE"
+    # FAILED_TO_GENERATE chưa được path nào implement hiện tại trả về — dành
+    # cho stub run_pipeline_with_llm() ở cuối file, khi regeneration hết lượt.
     cli: Optional[str] = None
     state: Optional[IntentState] = None
     reason: Optional[str] = None
@@ -67,7 +68,6 @@ def run_pipeline(
     parameters: dict,
     inventory: Inventory,
     security_policy: dict,
-    expected_properties: Optional[dict] = None,
 ) -> PipelineResult:
     trace: list[str] = []
 
@@ -91,21 +91,6 @@ def run_pipeline(
     validated_params = classified.structured_intent.validate_task_params().model_dump()
     cli = render(task, validated_params)
     trace.append("render() -> OK")
-
-    if expected_properties:
-        ok, mismatches = validate_properties(validated_params, expected_properties)
-        trace.append(f"validate_properties() -> {'OK' if ok else mismatches}")
-        if not ok:
-            # Ở Phase hiện tại (chưa có LLM), không có gì để "regenerate" —
-            # đây là chỗ trong Phase sau sẽ gọi lại Intent Parser với error
-            # context. Tạm thời trả FAILED_TO_GENERATE để pipeline có đường
-            # thoát rõ ràng thay vì silent-pass.
-            return PipelineResult(
-                status="FAILED_TO_GENERATE",
-                state=classified.state,
-                reason=f"Intent Validator mismatch: {mismatches}",
-                trace=trace,
-            )
 
     return PipelineResult(status="SUCCESS", cli=cli, state=classified.state, trace=trace)
 

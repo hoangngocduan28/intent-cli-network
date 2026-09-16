@@ -24,12 +24,12 @@ không tồn tại thì chưa có ý nghĩa để đánh giá "an toàn hay khô
 from __future__ import annotations
 from pydantic import ValidationError
 
-from src.intent_parser.schema import (
+from src.schemas.intent_schema import (
     StructuredIntent, ClassifiedIntent, IntentState, SupportedTask,
 )
 from src.context_provider.schema import Inventory
-from src.guardrail.policy_engine import check_against_security_policy, scan_for_injection_chars
-from src.guardrail.context_validator import check_device_context
+from src.guardrail.pre_render.policy_engine import check_against_security_policy, scan_for_injection_chars
+from src.guardrail.pre_render.context_validator import check_device_context
 
 
 def classify(raw_intent_text: str, task: str, parameters: dict,

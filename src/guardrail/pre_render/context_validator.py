@@ -3,8 +3,10 @@ Guardrail — Context Validator
 ==============================
 
 Vị trí trong pipeline: cùng bước với Policy Engine (SAU Schema Validation,
-TRƯỚC Config Generator). Phát hiện trạng thái INVALID_CONTEXT trong
-IntentState (src/intent_parser/schema.py).
+TRƯỚC Config Generator) — cả hai nằm trong src/guardrail/pre_render/, được
+classify() (src/guardrail/pre_render/classifier.py) gọi trước khi render.
+Phát hiện trạng thái INVALID_CONTEXT trong IntentState
+(src/schemas/intent_schema.py).
 
 Input:  task (str), params (dict đã được ép kiểu bởi Pydantic), inventory
         (`Inventory` — đã được `src/context_provider/loader.py` validate,

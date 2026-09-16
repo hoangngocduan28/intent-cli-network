@@ -94,8 +94,12 @@ for case in CASES:
         parameters=case["parameters"],
         inventory=inventory,
         security_policy=security_policy,
-        expected_properties=case.get("expected_properties"),
     )
+    # Lưu ý: run_pipeline() không còn nhận expected_properties — logic so
+    # sánh params với kỳ vọng đã dời hẳn sang tests/test_intent_validator.py
+    # vì nó là test assertion, không phải guardrail thật. Key
+    # "expected_properties" trong CASE 1 dưới đây vẫn giữ nguyên như dữ liệu
+    # tham khảo cho người đọc demo, không còn ảnh hưởng runtime.
     print(f"status = {result.status}")
     if result.reason:
         print(f"reason = {result.reason}")

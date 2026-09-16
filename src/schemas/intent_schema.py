@@ -41,9 +41,10 @@ class IntentState(str, Enum):
 #
 # QUAN TRỌNG: các field string dùng pattern whitelist ký tự ngay tại đây,
 # vì đây là lớp phòng thủ ĐẦU TIÊN chống Template/CLI Injection — không đợi
-# tới Parameter Sanitizer mới chặn. Sanitizer ở agent/sanitizer.py là lớp
-# phòng thủ THỨ HAI (defense in depth), phòng trường hợp schema bị bypass
-# do lỗi lập trình ở nơi khác.
+# tới Policy Engine mới chặn. scan_for_injection_chars() ở
+# src/guardrail/pre_render/policy_engine.py là lớp phòng thủ THỨ HAI
+# (defense in depth), phòng trường hợp schema bị bypass do lỗi lập trình
+# ở nơi khác.
 
 NAME_PATTERN = r"^[A-Za-z0-9_-]{1,32}$"  # không cho khoảng trắng, xuống dòng, ký tự đặc biệt
 
