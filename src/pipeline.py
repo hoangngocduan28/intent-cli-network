@@ -10,17 +10,17 @@ Structured Intent — tức là giả lập output của Intent Parser để có
     Structured Intent (giả lập)
             |
             v
-      classify()              -> agent/classifier.py
+      classify()              -> src/classifier.py
             |
     VALID_CONFIG?
        |         \\
       yes         no --------------------> trả về ClassifiedIntent kèm reason
        |
        v
-     render()                 -> agent/renderer.py
+     render()                 -> src/config_generator/generator.py
             |
             v
-   validate_properties()      -> agent/intent_validator.py  (nếu có expected_properties)
+   validate_properties()      -> src/guardrail/intent_validator.py  (nếu có expected_properties)
             |
       pass / fail
        |         \\
@@ -37,10 +37,11 @@ from typing import Optional
 import yaml
 from pathlib import Path
 
-from schemas.intent_schema import IntentState
-from agent.classifier import classify
-from agent.renderer import render
-from agent.intent_validator import validate_properties
+from src.intent_parser.schema import IntentState
+from src.context_provider.schema import Inventory
+from src.classifier import classify
+from src.config_generator.generator import render
+from src.guardrail.intent_validator import validate_properties
 
 MAX_REGENERATION_ATTEMPTS = 3
 
@@ -64,13 +65,13 @@ def run_pipeline(
     raw_intent_text: str,
     task: str,
     parameters: dict,
-    device_context: dict,
+    inventory: Inventory,
     security_policy: dict,
     expected_properties: Optional[dict] = None,
 ) -> PipelineResult:
     trace: list[str] = []
 
-    classified = classify(raw_intent_text, task, parameters, device_context, security_policy)
+    classified = classify(raw_intent_text, task, parameters, inventory, security_policy)
     trace.append(f"classify() -> {classified.state.value}")
 
     if classified.state != IntentState.VALID_CONFIG:
@@ -112,12 +113,12 @@ def run_pipeline(
 # ---------------------------------------------------------------------------
 # GHI CHÚ CHO PHASE TIẾP THEO (chưa implement ở đây):
 #
-# def run_pipeline_with_llm(raw_intent_text, device_context, security_policy):
+# def run_pipeline_with_llm(raw_intent_text, inventory, security_policy):
 #     for attempt in range(1, MAX_REGENERATION_ATTEMPTS + 1):
-#         structured = call_llm_intent_parser(raw_intent_text, device_context,
+#         structured = call_llm_intent_parser(raw_intent_text, inventory,
 #                                              feedback=previous_errors)
 #         result = run_pipeline(raw_intent_text, structured.task,
-#                                structured.parameters, device_context,
+#                                structured.parameters, inventory,
 #                                security_policy)
 #         if result.status == "SUCCESS":
 #             return result
@@ -125,6 +126,6 @@ def run_pipeline(
 #     return PipelineResult(status="FAILED_TO_GENERATE", attempts=MAX_REGENERATION_ATTEMPTS)
 #
 # Khi build phần này, KHÔNG để LLM tự sửa params trực tiếp và render lại mà
-# bỏ qua classify()/sanitizer — mọi lần regenerate PHẢI đi lại từ đầu pipeline
+# bỏ qua classify()/guardrail — mọi lần regenerate PHẢI đi lại từ đầu pipeline
 # để guardrail luôn được áp dụng, không có "đường tắt" nào bỏ qua validation.
 # ---------------------------------------------------------------------------

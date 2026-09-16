@@ -2,7 +2,8 @@
 Intent State Classifier
 ========================
 
-Input: StructuredIntent thô (dict parameters chưa ép kiểu) + Device Context.
+Input: StructuredIntent thô (dict parameters chưa ép kiểu) + Inventory
+       (src/context_provider/) — nguồn sự thật về topology đã validate.
 Output: ClassifiedIntent với 1 trong 5 trạng thái.
 
 Thứ tự kiểm tra CỐ Ý theo độ ưu tiên sau — không đảo thứ tự, vì mỗi bước
@@ -23,14 +24,16 @@ không tồn tại thì chưa có ý nghĩa để đánh giá "an toàn hay khô
 from __future__ import annotations
 from pydantic import ValidationError
 
-from schemas.intent_schema import (
+from src.intent_parser.schema import (
     StructuredIntent, ClassifiedIntent, IntentState, SupportedTask,
 )
-from agent.sanitizer import check_against_security_policy, check_device_context, scan_for_injection_chars
+from src.context_provider.schema import Inventory
+from src.guardrail.policy_engine import check_against_security_policy, scan_for_injection_chars
+from src.guardrail.context_validator import check_device_context
 
 
 def classify(raw_intent_text: str, task: str, parameters: dict,
-             device_context: dict, security_policy: dict) -> ClassifiedIntent:
+             inventory: Inventory, security_policy: dict) -> ClassifiedIntent:
 
     # (1) UNSUPPORTED_TASK
     if task not in {t.value for t in SupportedTask}:
@@ -64,7 +67,7 @@ def classify(raw_intent_text: str, task: str, parameters: dict,
         )
 
     # (3) INVALID_CONTEXT
-    ok, errors = check_device_context(task, params_dict, device_context)
+    ok, errors = check_device_context(task, params_dict, inventory)
     if not ok:
         return ClassifiedIntent(
             state=IntentState.INVALID_CONTEXT,

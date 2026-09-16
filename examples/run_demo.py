@@ -8,13 +8,20 @@ Chạy: python examples/run_demo.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))  # cho phép import agent/, schemas/
+# Console mặc định trên Windows dùng codepage cp1252, không encode được tiếng
+# Việt -> ép stdout/stderr sang UTF-8 để chạy trực tiếp bằng `python
+# examples/run_demo.py` mà không cần set PYTHONUTF8=1 thủ công.
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
-from agent.pipeline import run_pipeline, load_yaml
+sys.path.insert(0, str(Path(__file__).parent.parent))  # cho phép import src/
+
+from src.pipeline import run_pipeline, load_yaml
+from src.context_provider.loader import load_inventory
 
 ROOT = Path(__file__).parent.parent
-device_context = load_yaml(ROOT / "context" / "device_context.example.yaml")
-security_policy = load_yaml(ROOT / "policies" / "security_policy.yaml")
+inventory = load_inventory(ROOT / "data" / "inventory.yaml")
+security_policy = load_yaml(ROOT / "data" / "security_policy.yaml")
 
 CASES = [
     {
@@ -85,7 +92,7 @@ for case in CASES:
         raw_intent_text=case["raw_intent_text"],
         task=case["task"],
         parameters=case["parameters"],
-        device_context=device_context,
+        inventory=inventory,
         security_policy=security_policy,
         expected_properties=case.get("expected_properties"),
     )

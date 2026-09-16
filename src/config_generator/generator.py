@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
+TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 _env = Environment(
     loader=FileSystemLoader(str(TEMPLATE_DIR)),

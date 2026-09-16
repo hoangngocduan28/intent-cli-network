@@ -14,8 +14,8 @@ Tại sao dùng Pydantic thay vì chỉ validate bằng tay?
   (mỗi field có lý do tồn tại rõ ràng, không phải "black box parsing").
 
 Mỗi TaskIntent con ở đây tương ứng 1-1 với một Jinja2 template trong
-templates/. Đây chính là ràng buộc "8-12 nhóm task cố định" của đồ án -
-không có task nào ngoài danh sách này được phép render.
+src/config_generator/templates/. Đây chính là ràng buộc "8-12 nhóm task
+cố định" của đồ án - không có task nào ngoài danh sách này được phép render.
 """
 
 from __future__ import annotations

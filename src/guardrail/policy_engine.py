@@ -1,19 +1,25 @@
 """
-Parameter Sanitizer & Validator
-================================
+Guardrail — Policy Engine
+=========================
 
-Vị trí trong pipeline: SAU khi Structured Intent đã pass Pydantic schema,
-TRƯỚC khi đưa vào Jinja2 Renderer.
+Vị trí trong pipeline: SAU khi Structured Intent đã pass Pydantic schema
+(src/intent_parser/schema.py), TRƯỚC khi đưa vào Config Generator
+(src/config_generator/generator.py).
 
-Tại sao cần lớp này nếu schema (intent_schema.py) đã validate pattern rồi?
+Tại sao cần lớp này nếu schema đã validate pattern rồi?
 --> Defense in depth. Hai lý do cụ thể:
-  1. Schema validate CÚ PHÁP tham số (đúng kiểu, đúng regex). Sanitizer ở
-     đây validate NGỮ NGHĨA + CHÍNH SÁCH (vd: VLAN ID có nằm trong dải
+  1. Schema validate CÚ PHÁP tham số (đúng kiểu, đúng regex). Policy Engine
+     ở đây validate NGỮ NGHĨA + CHÍNH SÁCH (vd: VLAN ID có nằm trong dải
      reserved không — điều schema tĩnh không biết vì nó phụ thuộc policy
      file có thể thay đổi runtime).
   2. Nếu tương lai có người thêm task mới mà quên viết Pydantic pattern chặt
-     (lỗi lập trình), Sanitizer là lưới an toàn thứ hai bắt lại trước khi
-     chạm vào template.
+     (lỗi lập trình), Policy Engine là lưới an toàn thứ hai bắt lại trước
+     khi chạm vào template.
+
+Kiểm tra INVALID_CONTEXT (device/resource có tồn tại không) đã tách riêng
+sang `src/guardrail/context_validator.py` vì nó phụ thuộc Inventory
+(src/context_provider/) thay vì Security Policy — hai nguồn dữ liệu khác
+bản chất, không nên gộp chung một file.
 
 Mọi hàm ở đây trả về (ok: bool, errors: list[str]) thay vì raise Exception
 trực tiếp, vì Pipeline cần TẤT CẢ lỗi cùng lúc để đưa vào Regeneration
@@ -53,29 +59,6 @@ def check_against_security_policy(task: str, params: dict, policy: dict) -> tupl
                     f"Rule #{i}: source='{rule['source']}' bị cấm theo policy "
                     f"(tương đương permit-any trá hình, phải khai báo tường minh)"
                 )
-
-    return (len(errors) == 0, errors)
-
-
-def check_device_context(task: str, params: dict, device_context: dict) -> tuple[bool, list[str]]:
-    """Phát hiện INVALID_CONTEXT: tham chiếu thiết bị/VLAN không tồn tại.
-
-    Đây là nơi chặn hallucination — Agent không được tự bịa resource.
-    """
-    errors: list[str] = []
-    devices = device_context.get("devices", {})
-    target = params.get("target_device")
-
-    if target not in devices:
-        errors.append(f"target_device='{target}' không tồn tại trong Device Context")
-        return (False, errors)  # không check tiếp nếu device không tồn tại
-
-    device = devices[target]
-
-    if task == "create_vlan":
-        existing = device.get("existing_vlans", [])
-        if params["vlan_id"] in existing:
-            errors.append(f"VLAN {params['vlan_id']} đã tồn tại sẵn trên {target} — có thể là conflicting intent")
 
     return (len(errors) == 0, errors)
 
